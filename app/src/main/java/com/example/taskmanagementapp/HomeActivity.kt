@@ -11,7 +11,21 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.github.mikephil.charting.charts.CombinedChart
+import com.github.mikephil.charting.components.AxisBase
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.CombinedData
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.appbar.MaterialToolbar
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,34 +41,141 @@ class HomeActivity : AppCompatActivity() {
         val toolbar = findViewById<MaterialToolbar>(R.id.home_toolbar)
         setSupportActionBar(toolbar)
 
+        val activities = getActivities()
         val recentList = findViewById<RecyclerView>(R.id.home_recent_list)
         recentList.layoutManager = LinearLayoutManager(this)
-        recentList.adapter = ActivityAdapter(buildSampleActivities())
+        recentList.adapter = ActivityAdapter(activities)
+
+        setupWeeklyChart(activities)
     }
 
-    private fun buildSampleActivities(): List<ActivityEntry> {
+    private fun setupWeeklyChart(activities: List<ActivityEntry>) {
+        val chart = findViewById<CombinedChart>(R.id.home_weekly_chart)
+        val dailyStats = buildWeeklyStats(activities)
+        val dayLabels = dailyStats.map { it.label }
+
+        val timeEntries = dailyStats.mapIndexed { index, stat ->
+            BarEntry(index.toFloat(), stat.totalMinutes.toFloat())
+        }
+        val caloriesEntries = dailyStats.mapIndexed { index, stat ->
+            Entry(index.toFloat(), stat.totalCalories.toFloat())
+        }
+
+        val timeDataSet = BarDataSet(timeEntries, "Minutes")
+        timeDataSet.color = getColor(R.color.primary)
+        timeDataSet.valueTextSize = 10f
+        timeDataSet.setDrawValues(false)
+
+        val caloriesDataSet = LineDataSet(caloriesEntries, "Calories")
+        caloriesDataSet.color = getColor(R.color.black)
+        caloriesDataSet.circleRadius = 3.5f
+        caloriesDataSet.setCircleColor(getColor(R.color.black))
+        caloriesDataSet.valueTextSize = 10f
+        caloriesDataSet.lineWidth = 2f
+
+        val combinedData = CombinedData().apply {
+            setData(BarData(timeDataSet).apply {
+                barWidth = 0.6f
+            })
+            setData(LineData(caloriesDataSet))
+        }
+
+        chart.description.isEnabled = false
+        chart.axisRight.isEnabled = false
+        chart.axisLeft.axisMinimum = 0f
+        chart.axisLeft.granularity = 1f
+        chart.xAxis.position = XAxis.XAxisPosition.BOTTOM
+        chart.xAxis.granularity = 1f
+        chart.xAxis.setDrawGridLines(false)
+        chart.xAxis.axisMinimum = -0.5f
+        chart.xAxis.axisMaximum = dailyStats.size - 0.5f
+        chart.xAxis.valueFormatter = DayLabelFormatter(dayLabels)
+        chart.legend.isEnabled = true
+        chart.data = combinedData
+        chart.invalidate()
+    }
+
+    private fun buildWeeklyStats(activities: List<ActivityEntry>): List<DailyStat> {
+        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val dayFormatter = DateTimeFormatter.ofPattern("EEE", Locale.getDefault())
+        val parsedDates = activities.mapNotNull { entry ->
+            runCatching { LocalDate.parse(entry.date, dateFormatter) }.getOrNull()
+        }
+        val endDate = parsedDates.maxOrNull() ?: LocalDate.now()
+        val startDate = endDate.minusDays(6)
+        val range = (0..6).map { startDate.plusDays(it.toLong()) }
+
+        return range.map { day ->
+            val dayEntries = activities.filter { it.date == day.format(dateFormatter) }
+            val totalMinutes = dayEntries.sumOf { parseMinutes(it.duration) }
+            val totalCalories = dayEntries.sumOf { parseCalories(it.calories) }
+            DailyStat(
+                label = day.format(dayFormatter),
+                totalMinutes = totalMinutes,
+                totalCalories = totalCalories
+            )
+        }
+    }
+
+    private fun parseMinutes(duration: String): Int {
+        return duration.substringBefore(" ").toIntOrNull() ?: 0
+    }
+
+    private fun parseCalories(calories: String): Int {
+        return calories.substringBefore(" ").toIntOrNull() ?: 0
+    }
+
+    private fun getActivities(): List<ActivityEntry> {
         return listOf(
+            // Today - May 6, 2026
             ActivityEntry("Run", "22 min", "3.4 km", "2026-05-06", "210 kcal", "City Park"),
+            ActivityEntry("Core", "305 min", null, "2026-05-06", "100 kcal", "Home"),
+
+            // May 5, 2026
             ActivityEntry("Cycling", "38 min", "12.1 km", "2026-05-05", "360 kcal", "Riverside Trail"),
-            ActivityEntry("Weightlifting", "45 min", null, "2026-05-05", "280 kcal", "Iron Gym"),
+
+            // May 4, 2026
             ActivityEntry("Yoga", "30 min", null, "2026-05-04", "120 kcal", "Studio A"),
             ActivityEntry("Walk", "28 min", "2.2 km", "2026-05-04", "140 kcal", "Neighborhood"),
+            ActivityEntry("Weightlifting", "45 min", null, "2026-05-04", "280 kcal", "Iron Gym"),
+
+            // May 3, 2026
             ActivityEntry("Swim", "35 min", "1.0 km", "2026-05-03", "300 kcal", "Community Pool"),
             ActivityEntry("Hike", "62 min", "5.6 km", "2026-05-03", "520 kcal", "Pine Trail"),
+
+            // May 2, 2026
             ActivityEntry("Rowing", "25 min", "4.0 km", "2026-05-02", "260 kcal", "River Dock"),
             ActivityEntry("HIIT", "20 min", null, "2026-05-02", "240 kcal", "Home"),
+            ActivityEntry("Stretching", "10 min", null, "2026-05-02", "40 kcal", "Home"),
+
+            // May 1, 2026
             ActivityEntry("Pilates", "40 min", null, "2026-05-01", "190 kcal", "Studio B"),
             ActivityEntry("Elliptical", "30 min", "5.0 km", "2026-05-01", "280 kcal", "Fitness Center"),
+
+            // April 30, 2026
             ActivityEntry("Basketball", "50 min", null, "2026-04-30", "420 kcal", "Community Court"),
             ActivityEntry("Soccer", "70 min", null, "2026-04-30", "560 kcal", "East Field"),
+
+            // April 29, 2026
             ActivityEntry("Tennis", "55 min", null, "2026-04-29", "410 kcal", "West Courts"),
             ActivityEntry("Stair Climb", "18 min", "45 floors", "2026-04-29", "200 kcal", "Office Tower"),
-            ActivityEntry("Boxing", "40 min", null, "2026-04-28", "480 kcal", "Boxing Club"),
-            ActivityEntry("Jump Rope", "15 min", null, "2026-04-28", "160 kcal", "Home"),
-            ActivityEntry("Strength Training", "50 min", null, "2026-04-27", "340 kcal", "Iron Gym"),
-            ActivityEntry("Core", "18 min", null, "2026-04-27", "110 kcal", "Home"),
-            ActivityEntry("Stretching", "25 min", null, "2026-04-26", "90 kcal", "Home")
+            ActivityEntry("Jump Rope", "10 min", null, "2026-04-29", "110 kcal", "Home")
         )
+    }
+}
+
+private data class DailyStat(
+    val label: String,
+    val totalMinutes: Int,
+    val totalCalories: Int
+)
+
+private class DayLabelFormatter(
+    private val labels: List<String>
+) : ValueFormatter() {
+    override fun getAxisLabel(value: Float, axis: AxisBase?): String {
+        val index = value.toInt()
+        return labels.getOrNull(index) ?: ""
     }
 }
 
