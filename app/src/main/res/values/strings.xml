@@ -25,4 +25,13 @@
     <string name="goal_set_placeholder">Goal setup screen placeholder</string>
     <string name="workout_log_title">Workout Log</string>
     <string name="workout_log_placeholder">Workout log screen placeholder</string>
+    <string name="workout_log_form_title">Add workout log</string>
+    <string name="workout_log_activity_type_label">Activity type</string>
+    <string name="workout_log_duration_label">Duration</string>
+    <string name="workout_log_metric_label">Metric</string>
+    <string name="workout_log_date_label">Date (YYYY-MM-DD)</string>
+    <string name="workout_log_calories_label">Calories</string>
+    <string name="workout_log_location_label">Location</string>
+    <string name="workout_log_submit">Submit</string>
+    <string name="workout_log_date_picker_title">Select date</string>
 </resources>
