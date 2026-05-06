@@ -34,4 +34,12 @@
     <string name="workout_log_location_label">Location</string>
     <string name="workout_log_submit">Submit</string>
     <string name="workout_log_date_picker_title">Select date</string>
+    <string name="goal_set_form_title">Add goal</string>
+    <string name="goal_set_name_label">Goal name</string>
+    <string name="goal_set_target_value_label">Target value</string>
+    <string name="goal_set_target_metric_label">Target metric</string>
+    <string name="goal_set_deadline_label">Target date (YYYY-MM-DD)</string>
+    <string name="goal_set_notes_label">Notes</string>
+    <string name="goal_set_submit">Submit</string>
+    <string name="goal_set_date_picker_title">Select target date</string>
 </resources>
