@@ -1,5 +1,6 @@
 package com.example.taskmanagementapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -23,6 +24,9 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -47,6 +51,29 @@ class HomeActivity : AppCompatActivity() {
         recentList.adapter = ActivityAdapter(activities)
 
         setupWeeklyChart(activities)
+
+        val addFab = findViewById<FloatingActionButton>(R.id.home_add_fab)
+        addFab.setOnClickListener {
+            showQuickActionsDialog()
+        }
+    }
+
+    private fun showQuickActionsDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_home_quick_actions, null)
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
+            .create()
+
+        dialogView.findViewById<MaterialButton>(R.id.home_dialog_set_goal).setOnClickListener {
+            startActivity(Intent(this, GoalSetActivity::class.java))
+            dialog.dismiss()
+        }
+        dialogView.findViewById<MaterialButton>(R.id.home_dialog_add_workout).setOnClickListener {
+            startActivity(Intent(this, WorkoutLogActivity::class.java))
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun setupWeeklyChart(activities: List<ActivityEntry>) {
