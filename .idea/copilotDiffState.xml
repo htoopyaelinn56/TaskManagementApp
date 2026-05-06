@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="/strings (snapshot).xml">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="/strings (snapshot).xml" />
+              <option name="originalContent" value="&lt;resources&gt;&#10;    &lt;string name=&quot;app_name&quot;&gt;Task Management App&lt;/string&gt;&#10;&lt;/resources&gt;" />
+              <option name="updatedContent" value="&lt;resources&gt;&#10;    &lt;string name=&quot;app_name&quot;&gt;Task Management App&lt;/string&gt;&#10;    &lt;string name=&quot;login_title&quot;&gt;Welcome&lt;/string&gt;&#10;    &lt;string name=&quot;auth_toggle_login&quot;&gt;Login&lt;/string&gt;&#10;    &lt;string name=&quot;auth_toggle_register&quot;&gt;Register&lt;/string&gt;&#10;    &lt;string name=&quot;auth_username_hint&quot;&gt;Username&lt;/string&gt;&#10;    &lt;string name=&quot;auth_email_hint&quot;&gt;Email&lt;/string&gt;&#10;    &lt;string name=&quot;auth_action_continue&quot;&gt;Continue&lt;/string&gt;&#10;&lt;/resources&gt;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
