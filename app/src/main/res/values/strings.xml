@@ -10,4 +10,6 @@
     <string name="auth_title_register">Register</string>
     <string name="auth_action_login">Login</string>
     <string name="auth_action_register">Register</string>
+    <string name="home_title">Home</string>
+    <string name="home_subtitle">You are logged in. This is a placeholder home screen.</string>
 </resources>

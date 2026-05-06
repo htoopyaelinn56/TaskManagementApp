@@ -1,5 +1,6 @@
 package com.example.taskmanagementapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
@@ -37,6 +38,11 @@ class LoginActivity : AppCompatActivity() {
         switchText.setOnClickListener {
             isLogin = !isLogin
             updateUi()
+        }
+
+        actionButton.setOnClickListener {
+            startActivity(Intent(this, HomeActivity::class.java))
+            finish()
         }
 
         updateUi()
