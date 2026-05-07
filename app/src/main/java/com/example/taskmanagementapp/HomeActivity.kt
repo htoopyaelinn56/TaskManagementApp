@@ -27,6 +27,10 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.example.taskmanagementapp.model.ActivityEntry
+import com.example.taskmanagementapp.model.ActivityTypes
+import com.example.taskmanagementapp.model.Metric
+import com.example.taskmanagementapp.model.formatMetric
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -134,8 +138,8 @@ class HomeActivity : AppCompatActivity() {
 
         return range.map { day ->
             val dayEntries = activities.filter { it.date == day.format(dateFormatter) }
-            val totalMinutes = dayEntries.sumOf { parseMinutes(it.duration) }
-            val totalCalories = dayEntries.sumOf { parseCalories(it.calories) }
+            val totalMinutes = dayEntries.sumOf { it.durationMinutes }
+            val totalCalories = dayEntries.sumOf { it.caloriesKcal }
             DailyStat(
                 label = day.format(dayFormatter),
                 totalMinutes = totalMinutes,
@@ -144,49 +148,41 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun parseMinutes(duration: String): Int {
-        return duration.substringBefore(" ").toIntOrNull() ?: 0
-    }
-
-    private fun parseCalories(calories: String): Int {
-        return calories.substringBefore(" ").toIntOrNull() ?: 0
-    }
-
     private fun getActivities(): List<ActivityEntry> {
         return listOf(
             // Today - May 6, 2026
-            ActivityEntry("Run", "22 min", "3.4 km", "2026-05-06", "210 kcal", "City Park"),
-            ActivityEntry("Core", "305 min", null, "2026-05-06", "100 kcal", "Home"),
+            ActivityEntry(ActivityTypes.RUN, 22, Metric(3.4, "km"), "2026-05-06", 210, "City Park"),
+            ActivityEntry(ActivityTypes.CORE, 305, null, "2026-05-06", 100, "Home"),
 
             // May 5, 2026
-            ActivityEntry("Cycling", "38 min", "12.1 km", "2026-05-05", "360 kcal", "Riverside Trail"),
+            ActivityEntry(ActivityTypes.CYCLING, 38, Metric(12.1, "km"), "2026-05-05", 360, "Riverside Trail"),
 
             // May 4, 2026
-            ActivityEntry("Yoga", "30 min", null, "2026-05-04", "120 kcal", "Studio A"),
-            ActivityEntry("Walk", "28 min", "2.2 km", "2026-05-04", "140 kcal", "Neighborhood"),
-            ActivityEntry("Weightlifting", "45 min", null, "2026-05-04", "280 kcal", "Iron Gym"),
+            ActivityEntry(ActivityTypes.YOGA, 30, null, "2026-05-04", 120, "Studio A"),
+            ActivityEntry(ActivityTypes.WALK, 28, Metric(2.2, "km"), "2026-05-04", 140, "Neighborhood"),
+            ActivityEntry(ActivityTypes.WEIGHTLIFTING, 45, null, "2026-05-04", 280, "Iron Gym"),
 
             // May 3, 2026
-            ActivityEntry("Swim", "35 min", "1.0 km", "2026-05-03", "300 kcal", "Community Pool"),
-            ActivityEntry("Hike", "62 min", "5.6 km", "2026-05-03", "520 kcal", "Pine Trail"),
+            ActivityEntry(ActivityTypes.SWIM, 35, Metric(1.0, "km"), "2026-05-03", 300, "Community Pool"),
+            ActivityEntry(ActivityTypes.HIKE, 62, Metric(5.6, "km"), "2026-05-03", 520, "Pine Trail"),
 
             // May 2, 2026
-            ActivityEntry("Rowing", "25 min", "4.0 km", "2026-05-02", "260 kcal", "River Dock"),
-            ActivityEntry("HIIT", "20 min", null, "2026-05-02", "240 kcal", "Home"),
-            ActivityEntry("Stretching", "10 min", null, "2026-05-02", "40 kcal", "Home"),
+            ActivityEntry(ActivityTypes.ROWING, 25, Metric(4.0, "km"), "2026-05-02", 260, "River Dock"),
+            ActivityEntry(ActivityTypes.HIIT, 20, null, "2026-05-02", 240, "Home"),
+            ActivityEntry(ActivityTypes.STRETCHING, 10, null, "2026-05-02", 40, "Home"),
 
             // May 1, 2026
-            ActivityEntry("Pilates", "40 min", null, "2026-05-01", "190 kcal", "Studio B"),
-            ActivityEntry("Elliptical", "30 min", "5.0 km", "2026-05-01", "280 kcal", "Fitness Center"),
+            ActivityEntry(ActivityTypes.PILATES, 40, null, "2026-05-01", 190, "Studio B"),
+            ActivityEntry(ActivityTypes.ELLIPTICAL, 30, Metric(5.0, "km"), "2026-05-01", 280, "Fitness Center"),
 
             // April 30, 2026
-            ActivityEntry("Basketball", "50 min", null, "2026-04-30", "420 kcal", "Community Court"),
-            ActivityEntry("Soccer", "70 min", null, "2026-04-30", "560 kcal", "East Field"),
+            ActivityEntry(ActivityTypes.BASKETBALL, 50, null, "2026-04-30", 420, "Community Court"),
+            ActivityEntry(ActivityTypes.SOCCER, 70, null, "2026-04-30", 560, "East Field"),
 
             // April 29, 2026
-            ActivityEntry("Tennis", "55 min", null, "2026-04-29", "410 kcal", "West Courts"),
-            ActivityEntry("Stair Climb", "18 min", "45 floors", "2026-04-29", "200 kcal", "Office Tower"),
-            ActivityEntry("Jump Rope", "10 min", null, "2026-04-29", "110 kcal", "Home")
+            ActivityEntry(ActivityTypes.TENNIS, 55, null, "2026-04-29", 410, "West Courts"),
+            ActivityEntry(ActivityTypes.STAIR_CLIMB, 18, Metric(45.0, "floors"), "2026-04-29", 200, "Office Tower"),
+            ActivityEntry(ActivityTypes.JUMP_ROPE, 10, null, "2026-04-29", 110, "Home")
         )
     }
 }
@@ -205,15 +201,6 @@ private class DayLabelFormatter(
         return labels.getOrNull(index) ?: ""
     }
 }
-
-private data class ActivityEntry(
-    val type: String,
-    val duration: String,
-    val metric: String?,
-    val date: String,
-    val calories: String,
-    val location: String
-)
 
 private class ActivityAdapter(
     private val items: List<ActivityEntry>
@@ -240,13 +227,16 @@ private class ActivityAdapter(
             title.text = item.type
             metrics.text = buildString {
                 append("Duration: ")
-                append(item.duration)
-                if (!item.metric.isNullOrBlank()) {
+                append(item.durationMinutes)
+                append(" min")
+                val metricText = formatMetric(item.metric)
+                if (!metricText.isNullOrBlank()) {
                     append(" | Metric: ")
-                    append(item.metric)
+                    append(metricText)
                 }
                 append(" | Calories: ")
-                append(item.calories)
+                append(item.caloriesKcal)
+                append(" kcal")
             }
             meta.text = "Date: ${item.date} | Location: ${item.location}"
         }
