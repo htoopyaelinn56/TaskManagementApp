@@ -27,6 +27,11 @@ class GoalSetActivity : AppCompatActivity() {
         val toolbar = findViewById<MaterialToolbar>(R.id.goal_set_toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.title = getString(R.string.goal_set_title)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back)
+        toolbar.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
 
         val dateField = findViewById<TextInputEditText>(R.id.goal_set_deadline)
         val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")

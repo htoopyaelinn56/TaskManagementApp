@@ -27,6 +27,11 @@ class WorkoutLogActivity : AppCompatActivity() {
         val toolbar = findViewById<MaterialToolbar>(R.id.workout_log_toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.title = getString(R.string.workout_log_title)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back)
+        toolbar.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
 
         val dateField = findViewById<TextInputEditText>(R.id.workout_log_date)
         val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
