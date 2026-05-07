@@ -55,6 +55,34 @@ val ActivityTypeList = listOf(
     ActivityTypes.STAIR_CLIMB
 )
 
+object MetricUnits {
+    const val KILOMETER = "km"
+    const val METER = "m"
+    const val MILE = "mi"
+    const val YARD = "yd"
+    const val FOOT = "ft"
+    const val STEP = "steps"
+    const val LAP = "laps"
+    const val REP = "reps"
+    const val KILOGRAM = "kg"
+    const val POUND = "lb"
+    const val OUNCE = "oz"
+}
+
+val MetricUnitList = listOf(
+    MetricUnits.KILOMETER,
+    MetricUnits.METER,
+    MetricUnits.MILE,
+    MetricUnits.YARD,
+    MetricUnits.FOOT,
+    MetricUnits.STEP,
+    MetricUnits.LAP,
+    MetricUnits.REP,
+    MetricUnits.KILOGRAM,
+    MetricUnits.POUND,
+    MetricUnits.OUNCE
+)
+
 fun formatMetric(metric: Metric?): String? {
     if (metric == null) return null
     val formattedValue = if (metric.value % 1.0 == 0.0) {
@@ -64,4 +92,3 @@ fun formatMetric(metric: Metric?): String? {
     }
     return "$formattedValue ${metric.unit}"
 }
-

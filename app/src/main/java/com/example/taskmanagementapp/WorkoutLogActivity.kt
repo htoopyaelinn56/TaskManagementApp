@@ -2,12 +2,16 @@ package com.example.taskmanagementapp
 
 import android.os.Bundle
 import android.view.View
+import android.widget.ArrayAdapter
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.taskmanagementapp.model.ActivityTypeList
+import com.example.taskmanagementapp.model.MetricUnitList
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import java.time.Instant
 import java.time.ZoneId
@@ -32,6 +36,23 @@ class WorkoutLogActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
+
+        val activityTypeField = findViewById<MaterialAutoCompleteTextView>(R.id.workout_log_activity_type)
+        val metricUnitField = findViewById<MaterialAutoCompleteTextView>(R.id.workout_log_metric_unit)
+
+        val dropdownAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1,
+            ActivityTypeList
+        )
+        activityTypeField.setAdapter(dropdownAdapter)
+
+        val metricUnitAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1,
+            MetricUnitList
+        )
+        metricUnitField.setAdapter(metricUnitAdapter)
 
         val dateField = findViewById<TextInputEditText>(R.id.workout_log_date)
         val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
