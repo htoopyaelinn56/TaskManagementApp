@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -29,6 +30,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.example.taskmanagementapp.model.ActivityEntry
 import com.example.taskmanagementapp.model.ActivityTypes
+import com.example.taskmanagementapp.model.Goal
 import com.example.taskmanagementapp.model.Metric
 import com.example.taskmanagementapp.model.formatMetric
 import java.time.LocalDate
@@ -50,9 +52,23 @@ class HomeActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         val activities = getActivities()
+        val recentActivities = activities.take(5)
         val recentList = findViewById<RecyclerView>(R.id.home_recent_list)
         recentList.layoutManager = LinearLayoutManager(this)
-        recentList.adapter = ActivityAdapter(activities)
+        recentList.adapter = ActivityAdapter(recentActivities)
+
+        val goals = getGoals()
+        val recentGoals = goals.take(5)
+        val recentGoalsList = findViewById<RecyclerView>(R.id.home_recent_goals_list)
+        recentGoalsList.layoutManager = LinearLayoutManager(this)
+        recentGoalsList.adapter = GoalAdapter(recentGoals)
+
+        findViewById<View>(R.id.home_recent_goals_show_all).setOnClickListener {
+            Toast.makeText(this, R.string.home_show_all_goals_placeholder, Toast.LENGTH_SHORT).show()
+        }
+        findViewById<View>(R.id.home_recent_activities_show_all).setOnClickListener {
+            Toast.makeText(this, R.string.home_show_all_activities_placeholder, Toast.LENGTH_SHORT).show()
+        }
 
         setupWeeklyChart(activities)
 
@@ -185,6 +201,15 @@ class HomeActivity : AppCompatActivity() {
             ActivityEntry(ActivityTypes.JUMP_ROPE, 10, null, "2026-04-29", 110, "Home")
         )
     }
+
+    private fun getGoals(): List<Goal> {
+        return listOf(
+            Goal("Run 10 km", ActivityTypes.RUN, Metric(10.0, "km"), "2026-05-20", "Weekend target"),
+            Goal("Yoga 5 sessions", ActivityTypes.YOGA, Metric(5.0, "sessions"), "2026-05-25", null),
+            Goal("Walk 30k steps", ActivityTypes.WALK, Metric(30000.0, "steps"), "2026-05-30", "Daily average"),
+            Goal("Cycle 50 km", ActivityTypes.CYCLING, Metric(50.0, "km"), "2026-06-05", "Long ride")
+        )
+    }
 }
 
 private data class DailyStat(
@@ -239,6 +264,44 @@ private class ActivityAdapter(
                 append(" kcal")
             }
             meta.text = "Date: ${item.date} | Location: ${item.location}"
+        }
+    }
+}
+
+private class GoalAdapter(
+    private val items: List<Goal>
+) : RecyclerView.Adapter<GoalAdapter.GoalViewHolder>() {
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GoalViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_goal_card, parent, false)
+        return GoalViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: GoalViewHolder, position: Int) {
+        holder.bind(items[position])
+    }
+
+    override fun getItemCount(): Int = items.size
+
+    class GoalViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val title = itemView.findViewById<TextView>(R.id.goal_title)
+        private val meta = itemView.findViewById<TextView>(R.id.goal_meta)
+
+        fun bind(item: Goal) {
+            title.text = item.name
+            meta.text = buildString {
+                append(item.activityType)
+                val metricText = formatMetric(item.targetMetric)
+                if (!metricText.isNullOrBlank()) {
+                    append(" | Target: ")
+                    append(metricText)
+                }
+                if (item.deadline.isNotBlank()) {
+                    append(" | Due: ")
+                    append(item.deadline)
+                }
+            }
         }
     }
 }
