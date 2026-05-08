@@ -35,6 +35,8 @@
         <activity
             android:name=".WorkoutLogActivity"
             android:exported="false" />
+        <activity
+            android:name=".GoalsActivity" />
     </application>
 
 </manifest>

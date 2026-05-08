@@ -50,4 +50,5 @@
     <string name="goal_set_notes_label">Notes</string>
     <string name="goal_set_submit">Submit</string>
     <string name="goal_set_date_picker_title">Select target date</string>
+    <string name="goals_title">Goals</string>
 </resources>

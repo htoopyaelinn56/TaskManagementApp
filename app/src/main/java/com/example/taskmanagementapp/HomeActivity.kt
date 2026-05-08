@@ -33,6 +33,7 @@ import com.example.taskmanagementapp.model.ActivityTypes
 import com.example.taskmanagementapp.model.Goal
 import com.example.taskmanagementapp.model.Metric
 import com.example.taskmanagementapp.model.formatMetric
+import com.example.taskmanagementapp.ui.GoalAdapter
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -64,7 +65,7 @@ class HomeActivity : AppCompatActivity() {
         recentGoalsList.adapter = GoalAdapter(recentGoals)
 
         findViewById<View>(R.id.home_recent_goals_show_all).setOnClickListener {
-            Toast.makeText(this, R.string.home_show_all_goals_placeholder, Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, GoalsActivity::class.java))
         }
         findViewById<View>(R.id.home_recent_activities_show_all).setOnClickListener {
             Toast.makeText(this, R.string.home_show_all_activities_placeholder, Toast.LENGTH_SHORT).show()
@@ -264,44 +265,6 @@ private class ActivityAdapter(
                 append(" kcal")
             }
             meta.text = "Date: ${item.date} | Location: ${item.location}"
-        }
-    }
-}
-
-private class GoalAdapter(
-    private val items: List<Goal>
-) : RecyclerView.Adapter<GoalAdapter.GoalViewHolder>() {
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GoalViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_goal_card, parent, false)
-        return GoalViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: GoalViewHolder, position: Int) {
-        holder.bind(items[position])
-    }
-
-    override fun getItemCount(): Int = items.size
-
-    class GoalViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val title = itemView.findViewById<TextView>(R.id.goal_title)
-        private val meta = itemView.findViewById<TextView>(R.id.goal_meta)
-
-        fun bind(item: Goal) {
-            title.text = item.name
-            meta.text = buildString {
-                append(item.activityType)
-                val metricText = formatMetric(item.targetMetric)
-                if (!metricText.isNullOrBlank()) {
-                    append(" | Target: ")
-                    append(metricText)
-                }
-                if (item.deadline.isNotBlank()) {
-                    append(" | Due: ")
-                    append(item.deadline)
-                }
-            }
         }
     }
 }
