@@ -2,11 +2,7 @@ package com.example.taskmanagementapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -32,7 +28,8 @@ import com.example.taskmanagementapp.model.ActivityEntry
 import com.example.taskmanagementapp.model.ActivityTypes
 import com.example.taskmanagementapp.model.Goal
 import com.example.taskmanagementapp.model.Metric
-import com.example.taskmanagementapp.model.formatMetric
+import com.example.taskmanagementapp.model.sampleActivities
+import com.example.taskmanagementapp.ui.ActivityAdapter
 import com.example.taskmanagementapp.ui.GoalAdapter
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -52,7 +49,7 @@ class HomeActivity : AppCompatActivity() {
         val toolbar = findViewById<MaterialToolbar>(R.id.home_toolbar)
         setSupportActionBar(toolbar)
 
-        val activities = getActivities()
+        val activities = sampleActivities()
         val recentActivities = activities.take(5)
         val recentList = findViewById<RecyclerView>(R.id.home_recent_list)
         recentList.layoutManager = LinearLayoutManager(this)
@@ -68,7 +65,7 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, GoalsActivity::class.java))
         }
         findViewById<View>(R.id.home_recent_activities_show_all).setOnClickListener {
-            Toast.makeText(this, R.string.home_show_all_activities_placeholder, Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, ActivitiesActivity::class.java))
         }
 
         setupWeeklyChart(activities)
@@ -165,44 +162,6 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun getActivities(): List<ActivityEntry> {
-        return listOf(
-            // Today - May 6, 2026
-            ActivityEntry(ActivityTypes.RUN, 22, Metric(3.4, "km"), "2026-05-06", 210, "City Park"),
-            ActivityEntry(ActivityTypes.CORE, 305, null, "2026-05-06", 100, "Home"),
-
-            // May 5, 2026
-            ActivityEntry(ActivityTypes.CYCLING, 38, Metric(12.1, "km"), "2026-05-05", 360, "Riverside Trail"),
-
-            // May 4, 2026
-            ActivityEntry(ActivityTypes.YOGA, 30, null, "2026-05-04", 120, "Studio A"),
-            ActivityEntry(ActivityTypes.WALK, 28, Metric(2.2, "km"), "2026-05-04", 140, "Neighborhood"),
-            ActivityEntry(ActivityTypes.WEIGHTLIFTING, 45, null, "2026-05-04", 280, "Iron Gym"),
-
-            // May 3, 2026
-            ActivityEntry(ActivityTypes.SWIM, 35, Metric(1.0, "km"), "2026-05-03", 300, "Community Pool"),
-            ActivityEntry(ActivityTypes.HIKE, 62, Metric(5.6, "km"), "2026-05-03", 520, "Pine Trail"),
-
-            // May 2, 2026
-            ActivityEntry(ActivityTypes.ROWING, 25, Metric(4.0, "km"), "2026-05-02", 260, "River Dock"),
-            ActivityEntry(ActivityTypes.HIIT, 20, null, "2026-05-02", 240, "Home"),
-            ActivityEntry(ActivityTypes.STRETCHING, 10, null, "2026-05-02", 40, "Home"),
-
-            // May 1, 2026
-            ActivityEntry(ActivityTypes.PILATES, 40, null, "2026-05-01", 190, "Studio B"),
-            ActivityEntry(ActivityTypes.ELLIPTICAL, 30, Metric(5.0, "km"), "2026-05-01", 280, "Fitness Center"),
-
-            // April 30, 2026
-            ActivityEntry(ActivityTypes.BASKETBALL, 50, null, "2026-04-30", 420, "Community Court"),
-            ActivityEntry(ActivityTypes.SOCCER, 70, null, "2026-04-30", 560, "East Field"),
-
-            // April 29, 2026
-            ActivityEntry(ActivityTypes.TENNIS, 55, null, "2026-04-29", 410, "West Courts"),
-            ActivityEntry(ActivityTypes.STAIR_CLIMB, 18, Metric(45.0, "floors"), "2026-04-29", 200, "Office Tower"),
-            ActivityEntry(ActivityTypes.JUMP_ROPE, 10, null, "2026-04-29", 110, "Home")
-        )
-    }
-
     private fun getGoals(): List<Goal> {
         return listOf(
             Goal("Run 10 km", ActivityTypes.RUN, Metric(10.0, "km"), "2026-05-20", "Weekend target"),
@@ -225,46 +184,5 @@ private class DayLabelFormatter(
     override fun getAxisLabel(value: Float, axis: AxisBase?): String {
         val index = value.toInt()
         return labels.getOrNull(index) ?: ""
-    }
-}
-
-private class ActivityAdapter(
-    private val items: List<ActivityEntry>
-) : RecyclerView.Adapter<ActivityAdapter.ActivityViewHolder>() {
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ActivityViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_activity_card, parent, false)
-        return ActivityViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: ActivityViewHolder, position: Int) {
-        holder.bind(items[position])
-    }
-
-    override fun getItemCount(): Int = items.size
-
-    class ActivityViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val title = itemView.findViewById<TextView>(R.id.activity_title)
-        private val metrics = itemView.findViewById<TextView>(R.id.activity_metrics)
-        private val meta = itemView.findViewById<TextView>(R.id.activity_meta)
-
-        fun bind(item: ActivityEntry) {
-            title.text = item.type
-            metrics.text = buildString {
-                append("Duration: ")
-                append(item.durationMinutes)
-                append(" min")
-                val metricText = formatMetric(item.metric)
-                if (!metricText.isNullOrBlank()) {
-                    append(" | Metric: ")
-                    append(metricText)
-                }
-                append(" | Calories: ")
-                append(item.caloriesKcal)
-                append(" kcal")
-            }
-            meta.text = "Date: ${item.date} | Location: ${item.location}"
-        }
     }
 }
