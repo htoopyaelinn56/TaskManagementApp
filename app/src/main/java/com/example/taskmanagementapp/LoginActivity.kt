@@ -63,11 +63,9 @@ class LoginActivity : AppCompatActivity() {
                 setLoading(true, actionButton)
                 performLogin(username, password)
             } else {
-                // Registration not implemented yet - show a quick loading indicator inside the button
+                // perform registration via the same API (action=register)
                 setLoading(true, actionButton)
-                Toast.makeText(this, "Registration not implemented yet", Toast.LENGTH_SHORT).show()
-                // hide shortly after
-                progressBar.postDelayed({ setLoading(false, actionButton) }, 800)
+                performRegister(username, password, actionButton)
             }
         }
 
@@ -109,6 +107,38 @@ class LoginActivity : AppCompatActivity() {
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                 setLoading(false, findViewById(R.id.auth_action_button))
+                Toast.makeText(this@LoginActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
+    private fun performRegister(username: String, password: String, actionButton: MaterialButton) {
+        // ensure spinner visible
+        progressBar.visibility = View.VISIBLE
+
+        RetrofitClient.instance.login(username, password, "register").enqueue(object : Callback<LoginResponse> {
+            override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                // hide loading
+                setLoading(false, actionButton)
+
+                if (response.isSuccessful) {
+                    val registerResponse = response.body()
+                    if (registerResponse != null && registerResponse.status == "success") {
+                        Toast.makeText(this@LoginActivity, "${registerResponse.message}. Please Login again to continue!", Toast.LENGTH_LONG).show()
+                        // switch to login mode so user can sign in
+                        isLogin = true
+                        updateUi()
+                    } else {
+                        val errorMsg = registerResponse?.message ?: "Registration failed"
+                        Toast.makeText(this@LoginActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this@LoginActivity, "Server error: ${response.code()}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                setLoading(false, actionButton)
                 Toast.makeText(this@LoginActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
             }
         })
