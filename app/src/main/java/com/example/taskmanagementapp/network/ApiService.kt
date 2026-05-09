@@ -50,4 +50,17 @@ interface ApiService {
         @Field("calories_kcal") caloriesKcal: Int?,
         @Field("notes") notes: String?
     ): Call<CreateDeleteResponse>
+
+    @FormUrlEncoded
+    @POST("activities.php")
+    fun createActivity(
+        @Field("user_id") userId: Int,
+        @Field("type") type: String,
+        @Field("duration_minutes") durationMinutes: Int,
+        @Field("metric_value") metricValue: Double?,
+        @Field("metric_unit") metricUnit: String?,
+        @Field("date") date: String,
+        @Field("calories_kcal") caloriesKcal: Int?,
+        @Field("location") location: String?
+    ): Call<CreateDeleteResponse>
 }

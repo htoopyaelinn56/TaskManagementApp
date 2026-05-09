@@ -3,6 +3,12 @@ package com.example.taskmanagementapp
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.Toast
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import com.example.taskmanagementapp.network.RetrofitClient
+import com.example.taskmanagementapp.network.CreateDeleteResponse
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -75,6 +81,57 @@ class WorkoutLogActivity : AppCompatActivity() {
                 .toLocalDate()
                 .format(dateFormatter)
             dateField.setText(date)
+        }
+
+        // submit new activity
+        findViewById<View>(R.id.workout_log_submit).setOnClickListener {
+            val sharedPref = getSharedPreferences("user_prefs", MODE_PRIVATE)
+            val userId = sharedPref.getInt("user_id", -1)
+            if (userId <= 0) {
+                Toast.makeText(this, "Not logged in", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val type = activityTypeField.text?.toString().orEmpty()
+            val duration = findViewById<TextInputEditText>(R.id.workout_log_duration).text?.toString()?.toIntOrNull() ?: 0
+            val metricValue = findViewById<TextInputEditText>(R.id.workout_log_metric_value).text?.toString()?.toDoubleOrNull()
+            val metricUnit = metricUnitField.text?.toString().orEmpty().ifBlank { null }
+            val dateText = dateField.text?.toString().orEmpty()
+            val calories = findViewById<TextInputEditText>(R.id.workout_log_calories).text?.toString()?.toIntOrNull()
+            val location = ""
+
+            RetrofitClient.instance.createActivity(
+                userId,
+                type,
+                duration,
+                metricValue,
+                metricUnit,
+                dateText,
+                calories,
+                location
+            ).enqueue(object : Callback<CreateDeleteResponse> {
+                override fun onResponse(call: Call<CreateDeleteResponse>, response: Response<CreateDeleteResponse>) {
+                    if (response.isSuccessful) {
+                        val body = response.body()
+                        if (body != null && body.status == "success") {
+                            Toast.makeText(this@WorkoutLogActivity, body.message, Toast.LENGTH_SHORT).show()
+                            // notify other parts of app to refresh activities
+                            val intent = android.content.Intent("com.example.taskmanagementapp.ACTION_ACTIVITIES_UPDATED")
+                            intent.`package` = packageName
+                            sendBroadcast(intent)
+                            finish()
+                        } else {
+                            Toast.makeText(this@WorkoutLogActivity, "Failed to log activity: ${body?.message ?: "unknown"}", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(this@WorkoutLogActivity, "Failed to log activity: ${response.code()}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<CreateDeleteResponse>, t: Throwable) {
+                    Toast.makeText(this@WorkoutLogActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
         }
     }
 }
