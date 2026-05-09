@@ -97,7 +97,8 @@ class GoalSetActivity : AppCompatActivity() {
                 activityType = activityTypeField.text?.toString().orEmpty(),
                 targetMetric = metric,
                 deadline = dateField.text?.toString().orEmpty(),
-                notes = notesField.text?.toString().orEmpty().ifBlank { null }
+                notes = notesField.text?.toString().orEmpty().ifBlank { null },
+                status = "pending"
             )
         }
     }

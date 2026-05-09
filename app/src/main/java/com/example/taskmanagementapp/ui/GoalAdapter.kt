@@ -28,6 +28,7 @@ class GoalAdapter(
     class GoalViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val title = itemView.findViewById<TextView>(R.id.goal_title)
         private val meta = itemView.findViewById<TextView>(R.id.goal_meta)
+        private val status = itemView.findViewById<TextView>(R.id.goal_status)
 
         fun bind(item: Goal) {
             title.text = item.name
@@ -43,7 +44,7 @@ class GoalAdapter(
                     append(item.deadline)
                 }
             }
+            status.text = "Status: ${item.status}"
         }
     }
 }
-

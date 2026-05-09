@@ -86,7 +86,8 @@ data class Goal(
     val activityType: String,
     val targetMetric: Metric?,
     val deadline: String,
-    val notes: String?
+    val notes: String?,
+    val status: String? // pending, completed, missed
 )
 
 fun sampleActivities(): List<ActivityEntry> {
