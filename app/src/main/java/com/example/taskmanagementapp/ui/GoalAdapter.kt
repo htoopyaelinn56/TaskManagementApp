@@ -47,7 +47,11 @@ class GoalAdapter(
                     append(item.deadline)
                 }
             }
-            status.text = "Status: ${item.status}"
+            val progressText = item.progress?.let { p ->
+                val pct = (p * 100).toInt()
+                " | Progress: $pct%"
+            } ?: ""
+            status.text = "Status: ${item.status}$progressText"
 
             if (showDelete && item.id != null) {
                 deleteBtn.visibility = View.VISIBLE

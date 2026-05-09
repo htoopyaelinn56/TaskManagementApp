@@ -89,5 +89,6 @@ data class Goal(
     val targetMetric: Metric?,
     val deadline: String,
     val notes: String?,
-    val status: String? // pending, completed, missed
+    val status: String?, // pending, completed, missed
+    val progress: Double?  = null // between 0 and 1
 )
