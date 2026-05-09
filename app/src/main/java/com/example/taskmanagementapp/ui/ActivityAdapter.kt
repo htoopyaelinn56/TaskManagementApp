@@ -10,13 +10,15 @@ import com.example.taskmanagementapp.model.ActivityEntry
 import com.example.taskmanagementapp.model.formatMetric
 
 class ActivityAdapter(
-    private val items: List<ActivityEntry>
+    private val items: List<ActivityEntry>,
+    private val showDelete: Boolean = false,
+    private val onDelete: ((Int) -> Unit)? = null
 ) : RecyclerView.Adapter<ActivityAdapter.ActivityViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ActivityViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_activity_card, parent, false)
-        return ActivityViewHolder(view)
+        return ActivityViewHolder(view, showDelete, onDelete)
     }
 
     override fun onBindViewHolder(holder: ActivityViewHolder, position: Int) {
@@ -25,10 +27,11 @@ class ActivityAdapter(
 
     override fun getItemCount(): Int = items.size
 
-    class ActivityViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class ActivityViewHolder(itemView: View, private val showDelete: Boolean, private val onDelete: ((Int) -> Unit)?) : RecyclerView.ViewHolder(itemView) {
         private val title = itemView.findViewById<TextView>(R.id.activity_title)
         private val metrics = itemView.findViewById<TextView>(R.id.activity_metrics)
         private val meta = itemView.findViewById<TextView>(R.id.activity_meta)
+        private val deleteBtn = itemView.findViewById<android.widget.ImageButton>(R.id.activity_delete_btn)
 
         fun bind(item: ActivityEntry) {
             title.text = item.type
@@ -46,6 +49,15 @@ class ActivityAdapter(
                 append(" kcal")
             }
             meta.text = "Date: ${item.date} | Location: ${item.location}"
+            if (showDelete) {
+                deleteBtn.visibility = View.VISIBLE
+                deleteBtn.setOnClickListener {
+                    onDelete?.invoke(item.id)
+                }
+            } else {
+                deleteBtn.visibility = View.GONE
+                deleteBtn.setOnClickListener(null)
+            }
         }
     }
 }

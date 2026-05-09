@@ -71,7 +71,9 @@ class ActivitiesActivity : AppCompatActivity() {
                         )
                     }
 
-                    recyclerView.adapter = ActivityAdapter(activities)
+                    recyclerView.adapter = ActivityAdapter(activities, showDelete = true, onDelete = { id ->
+                        deleteActivity(id, recyclerView)
+                    })
                 } else {
                     Toast.makeText(this@ActivitiesActivity, "Failed to load activities: ${response.code()}", Toast.LENGTH_SHORT).show()
                     recyclerView.adapter = ActivityAdapter(listOf())
@@ -81,6 +83,33 @@ class ActivitiesActivity : AppCompatActivity() {
             override fun onFailure(call: Call<List<com.example.taskmanagementapp.network.ActivityResponse>>, t: Throwable) {
                 Toast.makeText(this@ActivitiesActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
                 recyclerView.adapter = ActivityAdapter(listOf())
+            }
+        })
+    }
+
+    private fun deleteActivity(activityId: Int, recyclerView: RecyclerView) {
+        RetrofitClient.instance.deleteActivity(activityId).enqueue(object : Callback<com.example.taskmanagementapp.network.CreateDeleteResponse> {
+            override fun onResponse(call: Call<com.example.taskmanagementapp.network.CreateDeleteResponse>, response: Response<com.example.taskmanagementapp.network.CreateDeleteResponse>) {
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null && body.status == "success") {
+                        Toast.makeText(this@ActivitiesActivity, body.message, Toast.LENGTH_SHORT).show()
+                        // refresh list
+                        fetchActivities(recyclerView)
+                        // notify HomeActivity to refresh recent activities
+                        val intent = android.content.Intent("com.example.taskmanagementapp.ACTION_ACTIVITIES_UPDATED")
+                        intent.`package` = packageName
+                        sendBroadcast(intent)
+                    } else {
+                        Toast.makeText(this@ActivitiesActivity, "Failed to delete: ${body?.message ?: "unknown"}", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this@ActivitiesActivity, "Failed to delete: ${response.code()}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<com.example.taskmanagementapp.network.CreateDeleteResponse>, t: Throwable) {
+                Toast.makeText(this@ActivitiesActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
             }
         })
     }

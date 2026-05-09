@@ -43,11 +43,18 @@ import java.util.Locale
 
 class HomeActivity : AppCompatActivity() {
     private lateinit var recentGoalsList: RecyclerView
-    private val goalsUpdateReceiver = object : android.content.BroadcastReceiver() {
+    private lateinit var recentActivitiesList: RecyclerView
+
+    private val updatesReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
-            // refresh recent goals when notified
-            // `recentGoalsList` is lateinit and non-null after onCreate, call directly
-            fetchGoals(recentGoalsList)
+            when (intent?.action) {
+                "com.example.taskmanagementapp.ACTION_GOALS_UPDATED" -> {
+                    if (::recentGoalsList.isInitialized) fetchGoals(recentGoalsList)
+                }
+                "com.example.taskmanagementapp.ACTION_ACTIVITIES_UPDATED" -> {
+                    if (::recentActivitiesList.isInitialized) fetchActivities(recentActivitiesList)
+                }
+            }
         }
     }
 
@@ -64,12 +71,12 @@ class HomeActivity : AppCompatActivity() {
         val toolbar = findViewById<MaterialToolbar>(R.id.home_toolbar)
         setSupportActionBar(toolbar)
 
-        val recentList = findViewById<RecyclerView>(R.id.home_recent_list)
-        recentList.layoutManager = LinearLayoutManager(this)
+        recentActivitiesList = findViewById<RecyclerView>(R.id.home_recent_list)
+        recentActivitiesList.layoutManager = LinearLayoutManager(this)
         // start with empty adapter while we fetch real activities
-        recentList.adapter = ActivityAdapter(listOf())
+        recentActivitiesList.adapter = ActivityAdapter(listOf())
         // fetch recent activities from API (or fallback to sample)
-        fetchActivities(recentList)
+        fetchActivities(recentActivitiesList)
 
         recentGoalsList = findViewById<RecyclerView>(R.id.home_recent_goals_list)
         recentGoalsList.layoutManager = LinearLayoutManager(this)
@@ -295,7 +302,7 @@ class HomeActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         try {
-            unregisterReceiver(goalsUpdateReceiver)
+            unregisterReceiver(updatesReceiver)
         } catch (e: Exception) {
             // ignore
         }
@@ -303,17 +310,21 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        val filter = android.content.IntentFilter("com.example.taskmanagementapp.ACTION_GOALS_UPDATED")
+        val filter = android.content.IntentFilter().apply {
+            addAction("com.example.taskmanagementapp.ACTION_GOALS_UPDATED")
+            addAction("com.example.taskmanagementapp.ACTION_ACTIVITIES_UPDATED")
+        }
         // register receiver while activity is visible; mark not exported for platform requirements
-        registerReceiver(goalsUpdateReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
-        // ensure recent goals are refreshed when activity becomes visible (covers returning from GoalsActivity)
-        fetchGoals(recentGoalsList)
+        registerReceiver(updatesReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        // ensure recent goals and activities are refreshed when activity becomes visible
+        if (::recentGoalsList.isInitialized) fetchGoals(recentGoalsList)
+        if (::recentActivitiesList.isInitialized) fetchActivities(recentActivitiesList)
     }
 
     override fun onStop() {
         super.onStop()
         try {
-            unregisterReceiver(goalsUpdateReceiver)
+            unregisterReceiver(updatesReceiver)
         } catch (e: Exception) {
             // ignore
         }

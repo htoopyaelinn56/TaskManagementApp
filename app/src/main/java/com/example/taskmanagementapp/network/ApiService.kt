@@ -33,6 +33,12 @@ interface ApiService {
     ): Call<CreateDeleteResponse>
 
     @FormUrlEncoded
+    @retrofit2.http.HTTP(method = "DELETE", path = "activities.php", hasBody = true)
+    fun deleteActivity(
+        @Field("id") id: Int
+    ): Call<CreateDeleteResponse>
+
+    @FormUrlEncoded
     @POST("goals.php")
     fun createGoal(
         @Field("user_id") userId: Int,
