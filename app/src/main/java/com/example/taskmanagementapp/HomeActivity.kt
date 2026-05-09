@@ -26,7 +26,14 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.widget.Toast
 import com.example.taskmanagementapp.model.ActivityEntry
+import com.example.taskmanagementapp.model.Metric as ModelMetric
+import com.example.taskmanagementapp.network.GoalResponse
+import com.example.taskmanagementapp.network.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import com.example.taskmanagementapp.model.ActivityTypes
 import com.example.taskmanagementapp.model.Goal
 import com.example.taskmanagementapp.model.Metric
@@ -57,11 +64,13 @@ class HomeActivity : AppCompatActivity() {
         recentList.layoutManager = LinearLayoutManager(this)
         recentList.adapter = ActivityAdapter(recentActivities)
 
-        val goals = getGoals()
-        val recentGoals = goals.take(5)
         val recentGoalsList = findViewById<RecyclerView>(R.id.home_recent_goals_list)
         recentGoalsList.layoutManager = LinearLayoutManager(this)
-        recentGoalsList.adapter = GoalAdapter(recentGoals)
+        // initially empty adapter until data loads
+        recentGoalsList.adapter = GoalAdapter(emptyList())
+
+        // fetch goals from API (or fallback to sample if not logged in)
+        fetchGoals(recentGoalsList)
 
         findViewById<View>(R.id.home_recent_goals_show_all).setOnClickListener {
             startActivity(Intent(this, GoalsActivity::class.java))
@@ -193,6 +202,51 @@ class HomeActivity : AppCompatActivity() {
             Goal("Walk 30k steps", ActivityTypes.WALK, Metric(30000.0, "steps"), "2026-05-30", "Daily average", "pending"),
             Goal("Cycle 50 km", ActivityTypes.CYCLING, Metric(50.0, "km"), "2026-06-05", "Long ride", "completed")
         )
+    }
+
+    private fun fetchGoals(recyclerView: RecyclerView) {
+        val sharedPref = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        val userId = sharedPref.getInt("user_id", -1)
+
+        if (userId <= 0) {
+            // no logged in user - show sample goals
+            val goals = getGoals()
+            val recentGoals = goals.take(5)
+            recyclerView.adapter = GoalAdapter(recentGoals)
+            return
+        }
+
+        RetrofitClient.instance.getGoals(userId).enqueue(object : Callback<List<GoalResponse>> {
+            override fun onResponse(call: Call<List<GoalResponse>>, response: Response<List<GoalResponse>>) {
+                if (response.isSuccessful) {
+                    val body = response.body() ?: emptyList()
+                    val goals = body.map { gr ->
+                        val metric = if (gr.targetValue != null) ModelMetric(gr.targetValue, gr.targetUnit ?: "") else null
+                        Goal(
+                            name = gr.name,
+                            activityType = gr.activityType,
+                            targetMetric = metric,
+                            deadline = gr.deadline,
+                            notes = gr.notes,
+                            status = gr.status
+                        )
+                    }
+
+                    val recent = goals.take(5)
+                    recyclerView.adapter = GoalAdapter(recent)
+                } else {
+                    Toast.makeText(this@HomeActivity, "Failed to load goals: ${response.code()}", Toast.LENGTH_SHORT).show()
+                    val goals = getGoals()
+                    recyclerView.adapter = GoalAdapter(goals.take(5))
+                }
+            }
+
+            override fun onFailure(call: Call<List<GoalResponse>>, t: Throwable) {
+                Toast.makeText(this@HomeActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+                val goals = getGoals()
+                recyclerView.adapter = GoalAdapter(goals.take(5))
+            }
+        })
     }
 }
 

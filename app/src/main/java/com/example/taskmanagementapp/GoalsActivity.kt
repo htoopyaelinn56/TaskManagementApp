@@ -8,11 +8,18 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.widget.Toast
 import com.example.taskmanagementapp.model.ActivityTypes
 import com.example.taskmanagementapp.model.Goal
 import com.example.taskmanagementapp.model.Metric
 import com.example.taskmanagementapp.model.formatMetric
 import com.example.taskmanagementapp.ui.GoalAdapter
+import com.example.taskmanagementapp.network.GoalResponse
+import com.example.taskmanagementapp.network.RetrofitClient
+import com.example.taskmanagementapp.model.Metric as ModelMetric
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import com.google.android.material.appbar.MaterialToolbar
 
 class GoalsActivity : AppCompatActivity() {
@@ -37,7 +44,50 @@ class GoalsActivity : AppCompatActivity() {
 
         val goalsList = findViewById<RecyclerView>(R.id.goals_list)
         goalsList.layoutManager = LinearLayoutManager(this)
-        goalsList.adapter = GoalAdapter(getGoals())
+        goalsList.adapter = GoalAdapter(emptyList())
+
+        // fetch all goals for the logged-in user (or fallback to sample data)
+        fetchGoals(goalsList)
+    }
+
+    private fun fetchGoals(recyclerView: RecyclerView) {
+        val sharedPref = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        val userId = sharedPref.getInt("user_id", -1)
+
+        if (userId <= 0) {
+            // no logged in user - show sample goals
+            recyclerView.adapter = GoalAdapter(getGoals())
+            return
+        }
+
+        RetrofitClient.instance.getGoals(userId).enqueue(object : Callback<List<GoalResponse>> {
+            override fun onResponse(call: Call<List<GoalResponse>>, response: Response<List<GoalResponse>>) {
+                if (response.isSuccessful) {
+                    val body = response.body() ?: emptyList()
+                    val goals = body.map { gr ->
+                        val metric = if (gr.targetValue != null) ModelMetric(gr.targetValue, gr.targetUnit ?: "") else null
+                        Goal(
+                            name = gr.name,
+                            activityType = gr.activityType,
+                            targetMetric = metric,
+                            deadline = gr.deadline,
+                            notes = gr.notes,
+                            status = gr.status
+                        )
+                    }
+
+                    recyclerView.adapter = GoalAdapter(goals)
+                } else {
+                    Toast.makeText(this@GoalsActivity, "Failed to load goals: ${response.code()}", Toast.LENGTH_SHORT).show()
+                    recyclerView.adapter = GoalAdapter(getGoals())
+                }
+            }
+
+            override fun onFailure(call: Call<List<GoalResponse>>, t: Throwable) {
+                Toast.makeText(this@GoalsActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+                recyclerView.adapter = GoalAdapter(getGoals())
+            }
+        })
     }
 
     private fun getGoals(): List<Goal> {
