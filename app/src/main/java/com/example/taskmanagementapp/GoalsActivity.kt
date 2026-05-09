@@ -16,6 +16,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import com.google.android.material.appbar.MaterialToolbar
+import java.util.Collections.emptyList
 
 class GoalsActivity : BaseActivity() {
     private lateinit var goalsList: RecyclerView

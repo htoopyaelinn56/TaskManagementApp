@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'com.example.taskmanagementapp'
-    compileSdk 36
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.taskmanagementapp"
@@ -30,6 +30,7 @@ android {
     kotlinOptions {
         jvmTarget = '11'
     }
+    buildToolsVersion '34.0.0'
 }
 
 dependencies {
