@@ -1,6 +1,7 @@
 package com.example.taskmanagementapp.network
 
 import retrofit2.Call
+import retrofit2.http.DELETE
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
@@ -20,4 +21,10 @@ interface ApiService {
     fun getGoals(
         @Query("user_id") userId: Int
     ): Call<List<GoalResponse>>
+
+    @FormUrlEncoded
+    @DELETE("goals.php")
+    fun deleteGoal(
+        @Field("id") id: Int,
+    ): Call<DeleteResponse>
 }

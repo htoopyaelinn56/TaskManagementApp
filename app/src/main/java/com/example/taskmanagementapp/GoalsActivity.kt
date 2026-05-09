@@ -1,8 +1,8 @@
 package com.example.taskmanagementapp
 
 import android.os.Bundle
-import android.view.View
 import androidx.activity.enableEdgeToEdge
+
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -12,7 +12,6 @@ import android.widget.Toast
 import com.example.taskmanagementapp.model.ActivityTypes
 import com.example.taskmanagementapp.model.Goal
 import com.example.taskmanagementapp.model.Metric
-import com.example.taskmanagementapp.model.formatMetric
 import com.example.taskmanagementapp.ui.GoalAdapter
 import com.example.taskmanagementapp.network.GoalResponse
 import com.example.taskmanagementapp.network.RetrofitClient
@@ -44,7 +43,7 @@ class GoalsActivity : AppCompatActivity() {
 
         val goalsList = findViewById<RecyclerView>(R.id.goals_list)
         goalsList.layoutManager = LinearLayoutManager(this)
-        goalsList.adapter = GoalAdapter(emptyList())
+        goalsList.adapter = GoalAdapter(emptyList(), showDelete = true, onDelete = null)
 
         // fetch all goals for the logged-in user (or fallback to sample data)
         fetchGoals(goalsList)
@@ -55,8 +54,8 @@ class GoalsActivity : AppCompatActivity() {
         val userId = sharedPref.getInt("user_id", -1)
 
         if (userId <= 0) {
-            // no logged in user - show sample goals
-            recyclerView.adapter = GoalAdapter(getGoals())
+            // no logged in user - show sample goals (delete hidden for sample items because id == null)
+            recyclerView.adapter = GoalAdapter(listOf(), showDelete = true, onDelete = null)
             return
         }
 
@@ -67,6 +66,7 @@ class GoalsActivity : AppCompatActivity() {
                     val goals = body.map { gr ->
                         val metric = if (gr.targetValue != null) ModelMetric(gr.targetValue, gr.targetUnit ?: "") else null
                         Goal(
+                            id = gr.id,
                             name = gr.name,
                             activityType = gr.activityType,
                             targetMetric = metric,
@@ -76,63 +76,47 @@ class GoalsActivity : AppCompatActivity() {
                         )
                     }
 
-                    recyclerView.adapter = GoalAdapter(goals)
+                    recyclerView.adapter = GoalAdapter(goals, showDelete = true, onDelete = { id ->
+                        deleteGoal(id, recyclerView)
+                    })
                 } else {
                     Toast.makeText(this@GoalsActivity, "Failed to load goals: ${response.code()}", Toast.LENGTH_SHORT).show()
-                    recyclerView.adapter = GoalAdapter(getGoals())
+                    recyclerView.adapter = GoalAdapter(listOf(), showDelete = true, onDelete = null)
                 }
             }
 
             override fun onFailure(call: Call<List<GoalResponse>>, t: Throwable) {
                 Toast.makeText(this@GoalsActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
-                recyclerView.adapter = GoalAdapter(getGoals())
+                recyclerView.adapter = GoalAdapter(listOf(), showDelete = true, onDelete = null)
             }
         })
     }
 
-    private fun getGoals(): List<Goal> {
-        return listOf(
-            Goal(
-                "Run 10 km",
-                ActivityTypes.RUN,
-                Metric(10.0, "km"),
-                "2026-05-20",
-                "Weekend target",
-                "pending"
-            ),
-            Goal(
-                "Yoga 5 sessions",
-                ActivityTypes.YOGA,
-                Metric(5.0, "sessions"),
-                "2026-05-25",
-                null,
-                "pending"
-            ),
-            Goal(
-                "Walk 30k steps",
-                ActivityTypes.WALK,
-                Metric(30000.0, "steps"),
-                "2026-05-30",
-                "Daily average",
-                "pending"
-            ),
-            Goal("Swim 3 km", ActivityTypes.SWIM, Metric(3.0, "km"), "2026-06-01", null, "completed",),
-            Goal(
-                "Cycle 50 km",
-                ActivityTypes.CYCLING,
-                Metric(50.0, "km"),
-                "2026-06-05",
-                "Long ride",
-                "pending"
-            ),
-            Goal(
-                "Strength 12 sets",
-                ActivityTypes.WEIGHTLIFTING,
-                Metric(12.0, "sets"),
-                "2026-06-10",
-                null,
-                "missed"
-            )
-        )
+    private fun deleteGoal(goalId: Int, recyclerView: RecyclerView) {
+        RetrofitClient.instance.deleteGoal(goalId).enqueue(object : Callback<com.example.taskmanagementapp.network.DeleteResponse> {
+            override fun onResponse(call: Call<com.example.taskmanagementapp.network.DeleteResponse>, response: Response<com.example.taskmanagementapp.network.DeleteResponse>) {
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null && body.status == "success") {
+                        Toast.makeText(this@GoalsActivity, body.message, Toast.LENGTH_SHORT).show()
+                        // refetch goals for this screen
+                        // fetchGoals(recyclerView)
+                        // notify other parts of app (HomeActivity) to refresh recent goals
+                        // val intent = android.content.Intent("com.example.taskmanagementapp.ACTION_GOALS_UPDATED")
+                        // restrict broadcast to this app only to avoid any external components
+                        // intent.`package` = packageName
+                        // sendBroadcast(intent)
+                    } else {
+                        Toast.makeText(this@GoalsActivity, "Failed to delete: ${body?.message ?: "unknown"}", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this@GoalsActivity, "Failed to delete: ${response.code()}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<com.example.taskmanagementapp.network.DeleteResponse>, t: Throwable) {
+                Toast.makeText(this@GoalsActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 }

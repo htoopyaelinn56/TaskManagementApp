@@ -10,13 +10,15 @@ import com.example.taskmanagementapp.model.Goal
 import com.example.taskmanagementapp.model.formatMetric
 
 class GoalAdapter(
-    private val items: List<Goal>
+    private val items: List<Goal>,
+    private val showDelete: Boolean = false,
+    private val onDelete: ((Int) -> Unit)? = null
 ) : RecyclerView.Adapter<GoalAdapter.GoalViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GoalViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_goal_card, parent, false)
-        return GoalViewHolder(view)
+        return GoalViewHolder(view, showDelete, onDelete)
     }
 
     override fun onBindViewHolder(holder: GoalViewHolder, position: Int) {
@@ -25,10 +27,11 @@ class GoalAdapter(
 
     override fun getItemCount(): Int = items.size
 
-    class GoalViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class GoalViewHolder(itemView: View, private val showDelete: Boolean, private val onDelete: ((Int) -> Unit)?) : RecyclerView.ViewHolder(itemView) {
         private val title = itemView.findViewById<TextView>(R.id.goal_title)
         private val meta = itemView.findViewById<TextView>(R.id.goal_meta)
         private val status = itemView.findViewById<TextView>(R.id.goal_status)
+        private val deleteBtn = itemView.findViewById<android.widget.ImageButton>(R.id.goal_delete_btn)
 
         fun bind(item: Goal) {
             title.text = item.name
@@ -45,6 +48,16 @@ class GoalAdapter(
                 }
             }
             status.text = "Status: ${item.status}"
+
+            if (showDelete && item.id != null) {
+                deleteBtn.visibility = View.VISIBLE
+                deleteBtn.setOnClickListener {
+                    onDelete?.invoke(item.id)
+                }
+            } else {
+                deleteBtn.visibility = View.GONE
+                deleteBtn.setOnClickListener(null)
+            }
         }
     }
 }

@@ -82,6 +82,7 @@ fun formatMetric(metric: Metric?): String? {
 }
 
 data class Goal(
+    val id: Int? = null,
     val name: String,
     val activityType: String,
     val targetMetric: Metric?,

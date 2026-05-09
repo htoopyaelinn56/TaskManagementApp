@@ -45,6 +45,15 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class HomeActivity : AppCompatActivity() {
+    private lateinit var recentGoalsList: RecyclerView
+    private val goalsUpdateReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            // refresh recent goals when notified
+            // `recentGoalsList` is lateinit and non-null after onCreate, call directly
+            fetchGoals(recentGoalsList)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -64,13 +73,15 @@ class HomeActivity : AppCompatActivity() {
         recentList.layoutManager = LinearLayoutManager(this)
         recentList.adapter = ActivityAdapter(recentActivities)
 
-        val recentGoalsList = findViewById<RecyclerView>(R.id.home_recent_goals_list)
+        recentGoalsList = findViewById<RecyclerView>(R.id.home_recent_goals_list)
         recentGoalsList.layoutManager = LinearLayoutManager(this)
         // initially empty adapter until data loads
         recentGoalsList.adapter = GoalAdapter(emptyList())
 
         // fetch goals from API (or fallback to sample if not logged in)
         fetchGoals(recentGoalsList)
+
+        // receiver registration moved to onStart so it is active only while HomeActivity is visible
 
         findViewById<View>(R.id.home_recent_goals_show_all).setOnClickListener {
             startActivity(Intent(this, GoalsActivity::class.java))
@@ -195,24 +206,15 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun getGoals(): List<Goal> {
-        return listOf(
-            Goal("Run 10 km", ActivityTypes.RUN, Metric(10.0, "km"), "2026-05-20", "Weekend target", "pending"),
-            Goal("Yoga 5 sessions", ActivityTypes.YOGA, Metric(5.0, "sessions"), "2026-05-25", null, "missed"),
-            Goal("Walk 30k steps", ActivityTypes.WALK, Metric(30000.0, "steps"), "2026-05-30", "Daily average", "pending"),
-            Goal("Cycle 50 km", ActivityTypes.CYCLING, Metric(50.0, "km"), "2026-06-05", "Long ride", "completed")
-        )
-    }
-
     private fun fetchGoals(recyclerView: RecyclerView) {
         val sharedPref = getSharedPreferences("user_prefs", MODE_PRIVATE)
         val userId = sharedPref.getInt("user_id", -1)
 
         if (userId <= 0) {
             // no logged in user - show sample goals
-            val goals = getGoals()
+            val goals = listOf<Goal>()
             val recentGoals = goals.take(5)
-            recyclerView.adapter = GoalAdapter(recentGoals)
+            recyclerView.adapter = GoalAdapter(recentGoals, showDelete = false, onDelete = null)
             return
         }
 
@@ -223,6 +225,7 @@ class HomeActivity : AppCompatActivity() {
                     val goals = body.map { gr ->
                         val metric = if (gr.targetValue != null) ModelMetric(gr.targetValue, gr.targetUnit ?: "") else null
                         Goal(
+                            id = gr.id,
                             name = gr.name,
                             activityType = gr.activityType,
                             targetMetric = metric,
@@ -233,20 +236,45 @@ class HomeActivity : AppCompatActivity() {
                     }
 
                     val recent = goals.take(5)
-                    recyclerView.adapter = GoalAdapter(recent)
+                    recyclerView.adapter = GoalAdapter(recent, showDelete = false, onDelete = null)
                 } else {
                     Toast.makeText(this@HomeActivity, "Failed to load goals: ${response.code()}", Toast.LENGTH_SHORT).show()
-                    val goals = getGoals()
-                    recyclerView.adapter = GoalAdapter(goals.take(5))
+                    val goals = listOf<Goal>()
+                    recyclerView.adapter = GoalAdapter(goals.take(5), showDelete = false, onDelete = null)
                 }
             }
 
             override fun onFailure(call: Call<List<GoalResponse>>, t: Throwable) {
                 Toast.makeText(this@HomeActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
-                val goals = getGoals()
-                recyclerView.adapter = GoalAdapter(goals.take(5))
+                val goals = listOf<Goal>()
+                recyclerView.adapter = GoalAdapter(goals.take(5), showDelete = false, onDelete = null)
             }
         })
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(goalsUpdateReceiver)
+        } catch (e: Exception) {
+            // ignore
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val filter = android.content.IntentFilter("com.example.taskmanagementapp.ACTION_GOALS_UPDATED")
+        // register receiver while activity is visible; mark not exported for platform requirements
+        registerReceiver(goalsUpdateReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        try {
+            unregisterReceiver(goalsUpdateReceiver)
+        } catch (e: Exception) {
+            // ignore
+        }
     }
 }
 
