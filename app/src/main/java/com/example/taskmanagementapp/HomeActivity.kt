@@ -86,6 +86,10 @@ class HomeActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {
+                // clear stored user id from SharedPreferences
+                val sharedPref = getSharedPreferences("user_prefs", MODE_PRIVATE)
+                sharedPref.edit().remove("user_id").apply()
+
                 val intent = Intent(this, LoginActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }

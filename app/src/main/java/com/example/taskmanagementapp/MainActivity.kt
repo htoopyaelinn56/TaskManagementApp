@@ -10,20 +10,18 @@ import androidx.core.view.WindowInsetsCompat
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Route to Login or Home depending on whether a user_id is stored in SharedPreferences
+        val sharedPref = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        val userId = sharedPref.getInt("user_id", -1)
 
-        val isLoggedIn = false
-        if (!isLoggedIn) {
+        if (userId > 0) {
+            // user is logged in -> go to Home
+            startActivity(Intent(this, HomeActivity::class.java))
+        } else {
+            // not logged in -> go to Login
             startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-            return
         }
-
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        finish()
+        return
     }
 }
