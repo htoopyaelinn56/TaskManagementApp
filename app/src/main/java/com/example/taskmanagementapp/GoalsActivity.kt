@@ -100,12 +100,12 @@ class GoalsActivity : AppCompatActivity() {
                     if (body != null && body.status == "success") {
                         Toast.makeText(this@GoalsActivity, body.message, Toast.LENGTH_SHORT).show()
                         // refetch goals for this screen
-                        // fetchGoals(recyclerView)
+                        fetchGoals(recyclerView)
                         // notify other parts of app (HomeActivity) to refresh recent goals
-                        // val intent = android.content.Intent("com.example.taskmanagementapp.ACTION_GOALS_UPDATED")
+                        val intent = android.content.Intent("com.example.taskmanagementapp.ACTION_GOALS_UPDATED")
                         // restrict broadcast to this app only to avoid any external components
-                        // intent.`package` = packageName
-                        // sendBroadcast(intent)
+                        intent.`package` = packageName
+                        sendBroadcast(intent)
                     } else {
                         Toast.makeText(this@GoalsActivity, "Failed to delete: ${body?.message ?: "unknown"}", Toast.LENGTH_SHORT).show()
                     }

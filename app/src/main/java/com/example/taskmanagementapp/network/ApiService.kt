@@ -23,8 +23,8 @@ interface ApiService {
     ): Call<List<GoalResponse>>
 
     @FormUrlEncoded
-    @DELETE("goals.php")
+    @retrofit2.http.HTTP(method = "DELETE", path = "goals.php", hasBody = true)
     fun deleteGoal(
-        @Field("id") id: Int,
+        @Field("id") id: Int
     ): Call<DeleteResponse>
 }

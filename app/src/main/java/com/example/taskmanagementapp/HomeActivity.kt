@@ -266,6 +266,8 @@ class HomeActivity : AppCompatActivity() {
         val filter = android.content.IntentFilter("com.example.taskmanagementapp.ACTION_GOALS_UPDATED")
         // register receiver while activity is visible; mark not exported for platform requirements
         registerReceiver(goalsUpdateReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        // ensure recent goals are refreshed when activity becomes visible (covers returning from GoalsActivity)
+        fetchGoals(recentGoalsList)
     }
 
     override fun onStop() {
