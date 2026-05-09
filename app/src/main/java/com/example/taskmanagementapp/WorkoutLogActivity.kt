@@ -9,6 +9,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import com.example.taskmanagementapp.network.RetrofitClient
+import com.example.taskmanagementapp.network.Http
 import com.example.taskmanagementapp.network.CreateDeleteResponse
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -30,7 +31,7 @@ import android.location.Geocoder
 import java.io.IOException
 import java.util.Locale
 
-class WorkoutLogActivity : AppCompatActivity() {
+class WorkoutLogActivity : BaseActivity() {
     // no external Play Services dependency: use Android LocationManager for last-known location
     // pending lambdas to execute submission depending on permission result
     private var pendingSubmission: (() -> Unit)? = null
@@ -49,23 +50,9 @@ class WorkoutLogActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_workout_log)
-        // nothing to init here for LocationManager
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.workout_log_root)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        val toolbar = findViewById<MaterialToolbar>(R.id.workout_log_toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.title = getString(R.string.workout_log_title)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        toolbar.setNavigationIcon(R.drawable.ic_arrow_back)
-        toolbar.setNavigationOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
-        }
+        applyEdgeToEdge(R.id.workout_log_root)
+        setupToolbar(R.id.workout_log_toolbar, getString(R.string.workout_log_title), showBack = true)
 
         val activityTypeField = findViewById<MaterialAutoCompleteTextView>(R.id.workout_log_activity_type)
         val metricUnitField = findViewById<MaterialAutoCompleteTextView>(R.id.workout_log_metric_unit)
@@ -126,7 +113,7 @@ class WorkoutLogActivity : AppCompatActivity() {
 
             // helper to perform the network call; location can be null
             fun performCreateActivityWithLocation(locationName: String?) {
-                RetrofitClient.instance.createActivity(
+                    Http.api.createActivity(
                     userId,
                     type,
                     duration,

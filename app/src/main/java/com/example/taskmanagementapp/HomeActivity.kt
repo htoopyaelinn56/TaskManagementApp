@@ -31,7 +31,7 @@ import com.example.taskmanagementapp.model.ActivityEntry
 import com.example.taskmanagementapp.model.Goal
 import com.example.taskmanagementapp.model.Metric as ModelMetric
 import com.example.taskmanagementapp.network.GoalResponse
-import com.example.taskmanagementapp.network.RetrofitClient
+import com.example.taskmanagementapp.network.Http
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -41,7 +41,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-class HomeActivity : AppCompatActivity() {
+class HomeActivity : BaseActivity() {
     private lateinit var recentGoalsList: RecyclerView
     private lateinit var recentActivitiesList: RecyclerView
 
@@ -60,16 +60,9 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_home)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.home_root)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        val toolbar = findViewById<MaterialToolbar>(R.id.home_toolbar)
-        setSupportActionBar(toolbar)
+        applyEdgeToEdge(R.id.home_root)
+        setupToolbar(R.id.home_toolbar, getString(R.string.app_name), showBack = false)
 
         recentActivitiesList = findViewById<RecyclerView>(R.id.home_recent_list)
         recentActivitiesList.layoutManager = LinearLayoutManager(this)
@@ -198,7 +191,7 @@ class HomeActivity : AppCompatActivity() {
             return
         }
 
-        RetrofitClient.instance.getActivities(userId).enqueue(object : Callback<List<com.example.taskmanagementapp.network.ActivityResponse>> {
+        Http.api.getActivities(userId).enqueue(object : Callback<List<com.example.taskmanagementapp.network.ActivityResponse>> {
             override fun onResponse(call: Call<List<com.example.taskmanagementapp.network.ActivityResponse>>, response: Response<List<com.example.taskmanagementapp.network.ActivityResponse>>) {
                 if (response.isSuccessful) {
                     val body = response.body() ?: emptyList()
@@ -265,12 +258,12 @@ class HomeActivity : AppCompatActivity() {
             return
         }
         // we need activities to compute progress for goals -> fetch activities first
-        RetrofitClient.instance.getActivities(userId).enqueue(object : Callback<List<com.example.taskmanagementapp.network.ActivityResponse>> {
+        Http.api.getActivities(userId).enqueue(object : Callback<List<com.example.taskmanagementapp.network.ActivityResponse>> {
             override fun onResponse(call: Call<List<com.example.taskmanagementapp.network.ActivityResponse>>, response: Response<List<com.example.taskmanagementapp.network.ActivityResponse>>) {
                 val activitiesBody = if (response.isSuccessful) response.body() ?: emptyList() else emptyList()
 
                 // now fetch goals and compute progress/status using activitiesBody
-                RetrofitClient.instance.getGoals(userId).enqueue(object : Callback<List<GoalResponse>> {
+                Http.api.getGoals(userId).enqueue(object : Callback<List<GoalResponse>> {
                     override fun onResponse(call: Call<List<GoalResponse>>, response: Response<List<GoalResponse>>) {
                         if (response.isSuccessful) {
                             val body = response.body() ?: emptyList()
@@ -351,7 +344,7 @@ class HomeActivity : AppCompatActivity() {
             override fun onFailure(call: Call<List<com.example.taskmanagementapp.network.ActivityResponse>>, t: Throwable) {
                 Toast.makeText(this@HomeActivity, "Network error fetching activities: ${t.message}", Toast.LENGTH_SHORT).show()
                 // fallback to fetching goals without progress
-                RetrofitClient.instance.getGoals(userId).enqueue(object : Callback<List<GoalResponse>> {
+                Http.api.getGoals(userId).enqueue(object : Callback<List<GoalResponse>> {
                     override fun onResponse(call: Call<List<GoalResponse>>, response: Response<List<GoalResponse>>) {
                         if (response.isSuccessful) {
                             val body = response.body() ?: emptyList()

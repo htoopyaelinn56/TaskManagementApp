@@ -1,7 +1,6 @@
 package com.example.taskmanagementapp
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -11,31 +10,18 @@ import android.widget.Toast
 import com.example.taskmanagementapp.model.ActivityEntry
 import com.example.taskmanagementapp.model.Metric
 import com.example.taskmanagementapp.ui.ActivityAdapter
-import com.example.taskmanagementapp.network.RetrofitClient
+import com.example.taskmanagementapp.network.Http
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import com.google.android.material.appbar.MaterialToolbar
 
-class ActivitiesActivity : AppCompatActivity() {
+class ActivitiesActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_activities)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activities_root)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        val toolbar = findViewById<MaterialToolbar>(R.id.activities_toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.title = getString(R.string.activities_title)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        toolbar.setNavigationIcon(R.drawable.ic_arrow_back)
-        toolbar.setNavigationOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
-        }
+        applyEdgeToEdge(R.id.activities_root)
+        setupToolbar(R.id.activities_toolbar, getString(R.string.activities_title), showBack = true)
 
         val activitiesList = findViewById<RecyclerView>(R.id.activities_list)
         activitiesList.layoutManager = LinearLayoutManager(this)
@@ -54,7 +40,7 @@ class ActivitiesActivity : AppCompatActivity() {
             return
         }
 
-        RetrofitClient.instance.getActivities(userId).enqueue(object : Callback<List<com.example.taskmanagementapp.network.ActivityResponse>> {
+        Http.api.getActivities(userId).enqueue(object : Callback<List<com.example.taskmanagementapp.network.ActivityResponse>> {
             override fun onResponse(call: Call<List<com.example.taskmanagementapp.network.ActivityResponse>>, response: Response<List<com.example.taskmanagementapp.network.ActivityResponse>>) {
                 if (response.isSuccessful) {
                     val body = response.body() ?: emptyList()
@@ -88,7 +74,7 @@ class ActivitiesActivity : AppCompatActivity() {
     }
 
     private fun deleteActivity(activityId: Int, recyclerView: RecyclerView) {
-        RetrofitClient.instance.deleteActivity(activityId).enqueue(object : Callback<com.example.taskmanagementapp.network.CreateDeleteResponse> {
+        Http.api.deleteActivity(activityId).enqueue(object : Callback<com.example.taskmanagementapp.network.CreateDeleteResponse> {
             override fun onResponse(call: Call<com.example.taskmanagementapp.network.CreateDeleteResponse>, response: Response<com.example.taskmanagementapp.network.CreateDeleteResponse>) {
                 if (response.isSuccessful) {
                     val body = response.body()

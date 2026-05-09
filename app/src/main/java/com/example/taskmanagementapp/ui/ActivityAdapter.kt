@@ -10,10 +10,10 @@ import com.example.taskmanagementapp.model.ActivityEntry
 import com.example.taskmanagementapp.model.formatMetric
 
 class ActivityAdapter(
-    private val items: List<ActivityEntry>,
+    items: List<ActivityEntry>,
     private val showDelete: Boolean = false,
     private val onDelete: ((Int) -> Unit)? = null
-) : RecyclerView.Adapter<ActivityAdapter.ActivityViewHolder>() {
+) : BaseAdapter<ActivityEntry, ActivityAdapter.ActivityViewHolder>(items) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ActivityViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -25,15 +25,13 @@ class ActivityAdapter(
         holder.bind(items[position])
     }
 
-    override fun getItemCount(): Int = items.size
-
-    class ActivityViewHolder(itemView: View, private val showDelete: Boolean, private val onDelete: ((Int) -> Unit)?) : RecyclerView.ViewHolder(itemView) {
+    class ActivityViewHolder(itemView: View, private val showDelete: Boolean, private val onDelete: ((Int) -> Unit)?) : BaseViewHolder<ActivityEntry>(itemView) {
         private val title = itemView.findViewById<TextView>(R.id.activity_title)
         private val metrics = itemView.findViewById<TextView>(R.id.activity_metrics)
         private val meta = itemView.findViewById<TextView>(R.id.activity_meta)
         private val deleteBtn = itemView.findViewById<android.widget.ImageButton>(R.id.activity_delete_btn)
 
-        fun bind(item: ActivityEntry) {
+        override fun bind(item: ActivityEntry) {
             title.text = item.type
             metrics.text = buildString {
                 append("Duration: ")

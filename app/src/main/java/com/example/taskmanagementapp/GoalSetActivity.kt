@@ -3,13 +3,12 @@ package com.example.taskmanagementapp
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.taskmanagementapp.model.ActivityTypeList
 import android.widget.Toast
-import com.example.taskmanagementapp.network.RetrofitClient
+import com.example.taskmanagementapp.network.Http
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -22,25 +21,12 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-class GoalSetActivity : AppCompatActivity() {
+class GoalSetActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_goal_set)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.goal_set_root)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        val toolbar = findViewById<MaterialToolbar>(R.id.goal_set_toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.title = getString(R.string.goal_set_title)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        toolbar.setNavigationIcon(R.drawable.ic_arrow_back)
-        toolbar.setNavigationOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
-        }
+        applyEdgeToEdge(R.id.goal_set_root)
+        setupToolbar(R.id.goal_set_toolbar, getString(R.string.goal_set_title), showBack = true)
 
         val activityTypeField = findViewById<MaterialAutoCompleteTextView>(R.id.goal_set_activity_type)
         val metricUnitField = findViewById<MaterialAutoCompleteTextView>(R.id.goal_set_target_metric_unit)
@@ -101,7 +87,7 @@ class GoalSetActivity : AppCompatActivity() {
             // calories input may not be present in the layout; leave null if not provided
             val calories: Int? = null
 
-            RetrofitClient.instance.createGoal(
+            Http.api.createGoal(
                 userId,
                 nameField.text?.toString().orEmpty(),
                 activityTypeField.text?.toString().orEmpty(),

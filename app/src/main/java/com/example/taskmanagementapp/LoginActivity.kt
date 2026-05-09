@@ -7,32 +7,26 @@ import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.taskmanagementapp.network.LoginResponse
-import com.example.taskmanagementapp.network.RetrofitClient
+import com.example.taskmanagementapp.network.Http
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : BaseActivity() {
     private lateinit var progressBar: ProgressBar
     private var actionButtonTextCache: CharSequence? = null
     private var isLoading = false
     private var isLogin = true
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_login)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.login_root)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        applyEdgeToEdge(R.id.login_root)
 
         val titleText = findViewById<TextView>(R.id.login_title)
         val switchText = findViewById<TextView>(R.id.auth_switch_text)
@@ -76,7 +70,7 @@ class LoginActivity : AppCompatActivity() {
         // ensure the progress indicator is visible (caller also sets it)
         progressBar.visibility = View.VISIBLE
 
-        RetrofitClient.instance.login(username, password).enqueue(object : Callback<LoginResponse> {
+        Http.api.login(username, password).enqueue(object : Callback<LoginResponse> {
             override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                 // hide loading
                 setLoading(false, findViewById(R.id.auth_action_button))
@@ -116,7 +110,7 @@ class LoginActivity : AppCompatActivity() {
         // ensure spinner visible
         progressBar.visibility = View.VISIBLE
 
-        RetrofitClient.instance.login(username, password, "register").enqueue(object : Callback<LoginResponse> {
+        Http.api.login(username, password, "register").enqueue(object : Callback<LoginResponse> {
             override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                 // hide loading
                 setLoading(false, actionButton)

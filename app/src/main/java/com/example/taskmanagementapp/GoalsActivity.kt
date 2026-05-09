@@ -1,8 +1,6 @@
 package com.example.taskmanagementapp
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
-
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -12,34 +10,21 @@ import android.widget.Toast
 import com.example.taskmanagementapp.model.Goal
 import com.example.taskmanagementapp.ui.GoalAdapter
 import com.example.taskmanagementapp.network.GoalResponse
-import com.example.taskmanagementapp.network.RetrofitClient
+import com.example.taskmanagementapp.network.Http
 import com.example.taskmanagementapp.model.Metric as ModelMetric
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import com.google.android.material.appbar.MaterialToolbar
 
-class GoalsActivity : AppCompatActivity() {
+class GoalsActivity : BaseActivity() {
     private lateinit var goalsList: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_goals)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.goals_root)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        val toolbar = findViewById<MaterialToolbar>(R.id.goals_toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.title = getString(R.string.goals_title)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        toolbar.setNavigationIcon(R.drawable.ic_arrow_back)
-        toolbar.setNavigationOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
-        }
+        applyEdgeToEdge(R.id.goals_root)
+        setupToolbar(R.id.goals_toolbar, getString(R.string.goals_title), showBack = true)
 
         goalsList = findViewById<RecyclerView>(R.id.goals_list)
         goalsList.layoutManager = LinearLayoutManager(this)
@@ -66,7 +51,7 @@ class GoalsActivity : AppCompatActivity() {
             return
         }
 
-        RetrofitClient.instance.getGoals(userId).enqueue(object : Callback<List<GoalResponse>> {
+        Http.api.getGoals(userId).enqueue(object : Callback<List<GoalResponse>> {
             override fun onResponse(call: Call<List<GoalResponse>>, response: Response<List<GoalResponse>>) {
                 if (response.isSuccessful) {
                     val body = response.body() ?: emptyList()
@@ -100,7 +85,7 @@ class GoalsActivity : AppCompatActivity() {
     }
 
     private fun deleteGoal(goalId: Int, recyclerView: RecyclerView) {
-        RetrofitClient.instance.deleteGoal(goalId).enqueue(object : Callback<com.example.taskmanagementapp.network.CreateDeleteResponse> {
+        Http.api.deleteGoal(goalId).enqueue(object : Callback<com.example.taskmanagementapp.network.CreateDeleteResponse> {
             override fun onResponse(call: Call<com.example.taskmanagementapp.network.CreateDeleteResponse>, response: Response<com.example.taskmanagementapp.network.CreateDeleteResponse>) {
                 if (response.isSuccessful) {
                     val body = response.body()
