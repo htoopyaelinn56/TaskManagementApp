@@ -9,9 +9,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.widget.Toast
-import com.example.taskmanagementapp.model.ActivityTypes
 import com.example.taskmanagementapp.model.Goal
-import com.example.taskmanagementapp.model.Metric
 import com.example.taskmanagementapp.ui.GoalAdapter
 import com.example.taskmanagementapp.network.GoalResponse
 import com.example.taskmanagementapp.network.RetrofitClient
@@ -22,6 +20,8 @@ import retrofit2.Response
 import com.google.android.material.appbar.MaterialToolbar
 
 class GoalsActivity : AppCompatActivity() {
+    private lateinit var goalsList: RecyclerView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -41,12 +41,19 @@ class GoalsActivity : AppCompatActivity() {
             onBackPressedDispatcher.onBackPressed()
         }
 
-        val goalsList = findViewById<RecyclerView>(R.id.goals_list)
+        goalsList = findViewById<RecyclerView>(R.id.goals_list)
         goalsList.layoutManager = LinearLayoutManager(this)
         goalsList.adapter = GoalAdapter(emptyList(), showDelete = true, onDelete = null)
 
         // fetch all goals for the logged-in user (or fallback to sample data)
         fetchGoals(goalsList)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (::goalsList.isInitialized) {
+            fetchGoals(goalsList)
+        }
     }
 
     private fun fetchGoals(recyclerView: RecyclerView) {
@@ -93,8 +100,8 @@ class GoalsActivity : AppCompatActivity() {
     }
 
     private fun deleteGoal(goalId: Int, recyclerView: RecyclerView) {
-        RetrofitClient.instance.deleteGoal(goalId).enqueue(object : Callback<com.example.taskmanagementapp.network.DeleteResponse> {
-            override fun onResponse(call: Call<com.example.taskmanagementapp.network.DeleteResponse>, response: Response<com.example.taskmanagementapp.network.DeleteResponse>) {
+        RetrofitClient.instance.deleteGoal(goalId).enqueue(object : Callback<com.example.taskmanagementapp.network.CreateDeleteResponse> {
+            override fun onResponse(call: Call<com.example.taskmanagementapp.network.CreateDeleteResponse>, response: Response<com.example.taskmanagementapp.network.CreateDeleteResponse>) {
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body != null && body.status == "success") {
@@ -114,7 +121,7 @@ class GoalsActivity : AppCompatActivity() {
                 }
             }
 
-            override fun onFailure(call: Call<com.example.taskmanagementapp.network.DeleteResponse>, t: Throwable) {
+            override fun onFailure(call: Call<com.example.taskmanagementapp.network.CreateDeleteResponse>, t: Throwable) {
                 Toast.makeText(this@GoalsActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
             }
         })

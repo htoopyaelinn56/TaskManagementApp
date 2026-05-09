@@ -8,8 +8,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.taskmanagementapp.model.ActivityTypeList
-import com.example.taskmanagementapp.model.Goal
-import com.example.taskmanagementapp.model.Metric
+import android.widget.Toast
+import com.example.taskmanagementapp.network.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import com.example.taskmanagementapp.model.MetricUnitList
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
@@ -84,22 +87,52 @@ class GoalSetActivity : AppCompatActivity() {
         val notesField = findViewById<TextInputEditText>(R.id.goal_set_notes)
 
         findViewById<View>(R.id.goal_set_submit).setOnClickListener {
-            val targetValue = targetValueField.text?.toString()?.toDoubleOrNull()
-            val targetUnit = metricUnitField.text?.toString().orEmpty()
-            val metric = if (targetValue != null && targetUnit.isNotBlank()) {
-                Metric(targetValue, targetUnit)
-            } else {
-                null
+            val sharedPref = getSharedPreferences("user_prefs", MODE_PRIVATE)
+            val userId = sharedPref.getInt("user_id", -1)
+            if (userId <= 0) {
+                Toast.makeText(this, "Not logged in", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
 
-            val goal = Goal(
-                name = nameField.text?.toString().orEmpty(),
-                activityType = activityTypeField.text?.toString().orEmpty(),
-                targetMetric = metric,
-                deadline = dateField.text?.toString().orEmpty(),
-                notes = notesField.text?.toString().orEmpty().ifBlank { null },
-                status = "pending"
-            )
+            val targetValue = targetValueField.text?.toString()?.toDoubleOrNull()
+            val targetUnit = metricUnitField.text?.toString().orEmpty().ifBlank { null }
+            val deadlineText = dateField.text?.toString().orEmpty().ifBlank { null }
+            val notesText = notesField.text?.toString().orEmpty().ifBlank { null }
+            // calories input may not be present in the layout; leave null if not provided
+            val calories: Int? = null
+
+            RetrofitClient.instance.createGoal(
+                userId,
+                nameField.text?.toString().orEmpty(),
+                activityTypeField.text?.toString().orEmpty(),
+                targetValue,
+                targetUnit,
+                deadlineText,
+                calories,
+                notesText
+            ).enqueue(object : Callback<com.example.taskmanagementapp.network.CreateDeleteResponse> {
+                override fun onResponse(call: Call<com.example.taskmanagementapp.network.CreateDeleteResponse>, response: Response<com.example.taskmanagementapp.network.CreateDeleteResponse>) {
+                    if (response.isSuccessful) {
+                        val body = response.body()
+                        if (body != null && body.status == "success") {
+                            Toast.makeText(this@GoalSetActivity, body.message, Toast.LENGTH_SHORT).show()
+                            // notify other parts of the app and finish to return to GoalsActivity
+                            val intent = android.content.Intent("com.example.taskmanagementapp.ACTION_GOALS_UPDATED")
+                            intent.`package` = packageName
+                            sendBroadcast(intent)
+                            finish()
+                        } else {
+                            Toast.makeText(this@GoalSetActivity, "Failed to create goal: ${body?.message ?: "unknown"}", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(this@GoalSetActivity, "Failed to create goal!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<com.example.taskmanagementapp.network.CreateDeleteResponse>, t: Throwable) {
+                    Toast.makeText(this@GoalSetActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
         }
     }
 }
