@@ -28,16 +28,13 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import android.widget.Toast
 import com.example.taskmanagementapp.model.ActivityEntry
+import com.example.taskmanagementapp.model.Goal
 import com.example.taskmanagementapp.model.Metric as ModelMetric
 import com.example.taskmanagementapp.network.GoalResponse
 import com.example.taskmanagementapp.network.RetrofitClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import com.example.taskmanagementapp.model.ActivityTypes
-import com.example.taskmanagementapp.model.Goal
-import com.example.taskmanagementapp.model.Metric
-import com.example.taskmanagementapp.model.sampleActivities
 import com.example.taskmanagementapp.ui.ActivityAdapter
 import com.example.taskmanagementapp.ui.GoalAdapter
 import java.time.LocalDate
@@ -67,11 +64,12 @@ class HomeActivity : AppCompatActivity() {
         val toolbar = findViewById<MaterialToolbar>(R.id.home_toolbar)
         setSupportActionBar(toolbar)
 
-        val activities = sampleActivities()
-        val recentActivities = activities.take(5)
         val recentList = findViewById<RecyclerView>(R.id.home_recent_list)
         recentList.layoutManager = LinearLayoutManager(this)
-        recentList.adapter = ActivityAdapter(recentActivities)
+        // start with empty adapter while we fetch real activities
+        recentList.adapter = ActivityAdapter(listOf())
+        // fetch recent activities from API (or fallback to sample)
+        fetchActivities(recentList)
 
         recentGoalsList = findViewById<RecyclerView>(R.id.home_recent_goals_list)
         recentGoalsList.layoutManager = LinearLayoutManager(this)
@@ -89,8 +87,6 @@ class HomeActivity : AppCompatActivity() {
         findViewById<View>(R.id.home_recent_activities_show_all).setOnClickListener {
             startActivity(Intent(this, ActivitiesActivity::class.java))
         }
-
-        setupWeeklyChart(activities)
 
         val addFab = findViewById<FloatingActionButton>(R.id.home_add_fab)
         addFab.setOnClickListener {
@@ -182,6 +178,50 @@ class HomeActivity : AppCompatActivity() {
         chart.legend.isEnabled = true
         chart.data = combinedData
         chart.invalidate()
+    }
+
+    private fun fetchActivities(recyclerView: RecyclerView) {
+        val sharedPref = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        val userId = sharedPref.getInt("user_id", -1)
+
+        if (userId <= 0) {
+            // not logged in - show sample activities
+            val activities = listOf<ActivityEntry>()
+            recyclerView.adapter = ActivityAdapter(activities.take(5))
+            return
+        }
+
+        RetrofitClient.instance.getActivities(userId).enqueue(object : Callback<List<com.example.taskmanagementapp.network.ActivityResponse>> {
+            override fun onResponse(call: Call<List<com.example.taskmanagementapp.network.ActivityResponse>>, response: Response<List<com.example.taskmanagementapp.network.ActivityResponse>>) {
+                if (response.isSuccessful) {
+                    val body = response.body() ?: emptyList()
+                    val activities = body.map { ar ->
+                        val metric = if (ar.metricValue != null) com.example.taskmanagementapp.model.Metric(ar.metricValue, ar.metricUnit ?: "") else null
+                        com.example.taskmanagementapp.model.ActivityEntry(
+                            id = ar.id,
+                            type = ar.type,
+                            durationMinutes = ar.durationMinutes,
+                            metric = metric,
+                            date = ar.date,
+                            caloriesKcal = ar.caloriesKcal,
+                            location = ar.location
+                        )
+                    }
+
+                    setupWeeklyChart(activities)
+
+                    recyclerView.adapter = ActivityAdapter(activities.take(5))
+                } else {
+                    Toast.makeText(this@HomeActivity, "Failed to load activities: ${response.code()}", Toast.LENGTH_SHORT).show()
+                    recyclerView.adapter = ActivityAdapter(listOf<ActivityEntry>().take(5))
+                }
+            }
+
+            override fun onFailure(call: Call<List<com.example.taskmanagementapp.network.ActivityResponse>>, t: Throwable) {
+                Toast.makeText(this@HomeActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+                recyclerView.adapter = ActivityAdapter(listOf<ActivityEntry>().take(5))
+            }
+        })
     }
 
     private fun buildWeeklyStats(activities: List<ActivityEntry>): List<DailyStat> {

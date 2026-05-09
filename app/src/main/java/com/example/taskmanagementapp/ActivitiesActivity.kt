@@ -7,7 +7,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.taskmanagementapp.model.sampleActivities
+import com.example.taskmanagementapp.model.ActivityEntry
 import com.example.taskmanagementapp.ui.ActivityAdapter
 import com.google.android.material.appbar.MaterialToolbar
 
@@ -33,6 +33,6 @@ class ActivitiesActivity : AppCompatActivity() {
 
         val activitiesList = findViewById<RecyclerView>(R.id.activities_list)
         activitiesList.layoutManager = LinearLayoutManager(this)
-        activitiesList.adapter = ActivityAdapter(sampleActivities())
+        activitiesList.adapter = ActivityAdapter(listOf<ActivityEntry>())
     }
 }

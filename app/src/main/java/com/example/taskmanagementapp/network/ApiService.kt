@@ -21,6 +21,11 @@ interface ApiService {
         @Query("user_id") userId: Int
     ): Call<List<GoalResponse>>
 
+    @GET("activities.php")
+    fun getActivities(
+        @Query("user_id") userId: Int
+    ): Call<List<ActivityResponse>>
+
     @FormUrlEncoded
     @retrofit2.http.HTTP(method = "DELETE", path = "goals.php", hasBody = true)
     fun deleteGoal(
