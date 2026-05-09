@@ -44,6 +44,7 @@ dependencies {
     implementation libs.retrofit
     implementation libs.retrofit.converter.gson
     implementation libs.okhttp.logging
+    // Note: location is obtained via Android LocationManager (no Play Services dependency required)
     
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
